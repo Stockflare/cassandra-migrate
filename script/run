@@ -1,0 +1,1 @@
+compose run migrate bundle exec dotenv $@
