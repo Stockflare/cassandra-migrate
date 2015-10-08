@@ -8,11 +8,11 @@ class InstrumentApi
 
     # Loop round and get the stocks
     start_key = nil
-
+    index = 0
+    block = 0
     begin
       result = get_stocks(start_key)
       start_key = result.last_evaluated_key
-      index = 0
       result.items.each do |item|
         company = get_company(item['id'])
         instrument = {}
@@ -21,7 +21,7 @@ class InstrumentApi
           begin
             instruments = Stockflare::Instruments.get(ric: item['ric'].downcase).call.body
             if instruments.count > 0
-              instrument = instruments[0]
+              instrument = instruments[0].to_h
             end
           rescue Shotgun::Services::Errors::HttpError => error
             puts error.inspect
@@ -30,33 +30,33 @@ class InstrumentApi
 
           # Build the instrument
           instrument = instrument.merge({
-            ric: item['ric'].downcase,
-            repo_no: item['repo_no'].downcase,
-            ticker: item['ticker'].downcase,
-            currency_code: item['currency_code'].downcase,
-            classification: item['classification'].downcase,
-            category: item['category'].downcase,
-            exchange_code: item['exchange_id'],
-            is_primary: item['is_primary'],
-            active: item['active'],
-            sector_code: item['sector_code']
+            "ric" => item['ric'].downcase,
+            "repo_no" => item['repo_no'].to_s.downcase,
+            "ticker" => item['ticker'].to_s.downcase,
+            "currency_code" => item['currency_code'].to_s.downcase,
+            "classification" => item['classification'].to_s.downcase,
+            "category" => item['category'].to_s.downcase,
+            "exchange_code" => item['exchange_id'].to_i,
+            "is_primary" => item['is_primary'],
+            "active" => item['active'],
+            "sector_code" => item['sector_code'].to_i
           })
 
           instrument = instrument.merge({
-            long_name: company['long_name'],
-            short_name: company['short_name'],
-            country_code: company['country_code'].downcase,
-            description: company['description'],
-            home_page: company['home_page'],
-            financial_summary: company['financial_summary'],
-            financial_information: company['financial_information']
+            'long_name' => company['long_name'],
+            'short_name' => company['short_name'],
+            'country_code' => company['country_code'].downcase,
+            'description' => company['description'],
+            'home_page' => company['home_page'],
+            'financial_summary' => company['financial_summary'],
+            'financial_information' => company['financial_information']
           })
           instrument = instrument.deep_compact
-          instrument[:isin] = 'null'
-          if instrument[:ticker]
+          instrument['isin'] = 'null'
+          if instrument.has_key?('ticker')
             begin
               Stockflare::Instruments.create(instrument).call
-              puts "Populated No: #{index}"
+              puts "Block: #{block}, Item No: #{index}, RIC: #{item['ric'].downcase}"
               index = index + 1
             rescue Shotgun::Services::Errors::HttpError => error
               puts error.inspect
@@ -68,6 +68,7 @@ class InstrumentApi
 
 
       end
+      block = block + 1
     end while start_key
 
   end

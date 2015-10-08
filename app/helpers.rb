@@ -28,7 +28,7 @@ module Helpers
 
         value = tuple[1]
 
-        if tuple[0] != 'id' && tuple[0] != 'stock_id' && tuple[0] != 'exchange_id'
+        if tuple[0] != 'id' && tuple[0] != 'stock_id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
           value = 'null' if value == nil
 
           # is this a boolean
@@ -52,7 +52,6 @@ module Helpers
 
       puts "Item"
       puts item.inspect
-      binding.pry if index == 43
       # Write the table to Dynamo
       response = dynamodb.put_item(
         table_name: table,
