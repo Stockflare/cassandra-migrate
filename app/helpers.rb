@@ -1,12 +1,14 @@
 require 'aws-sdk'
 require 'csv'
 require 'pry-byebug'
+require 'fileutils'
 
 module Helpers
   def do_copy_file(file_name)
     csv_file = file_name
     s3 = Aws::S3::Client.new(region: ENV['AWS_REGION'])
-    File.open("/tmp/#{csv_file}", 'wb') do |file|
+    f = FileUtils.mkdir_p("/data/cassandra-migrate")
+    File.open("/data/cassandra-migrate/#{csv_file}", 'wb') do |file|
       s3.get_object({ bucket: ENV['CSV_DATA_BUCKET'], key: "#{ENV['CSV_DATA_FOLDER']}/#{csv_file}" }, target: file)
     end
   end
@@ -18,7 +20,7 @@ module Helpers
     table = table_name
     csv_file = file_name
     index = 0
-    CSV.foreach("/tmp/#{csv_file}", headers: true, converters: :all, encoding: "UTF-8") do |row|
+    CSV.foreach("/data/cassandra-migrate/#{csv_file}", headers: true, converters: :all, encoding: "UTF-8") do |row|
       item = {}
       puts "Index: #{index}"
       puts row
@@ -27,7 +29,7 @@ module Helpers
 
         value = tuple[1]
 
-        if tuple[0] != 'id' && tuple[0] != 'stock_id'
+        if tuple[0] != 'id' && tuple[0] != 'stock_id' && tuple[0] != 'exchange_id'
           value = 'null' if value == nil
 
           # is this a boolean

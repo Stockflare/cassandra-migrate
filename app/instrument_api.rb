@@ -12,13 +12,17 @@ class InstrumentApi
     begin
       result = get_stocks(start_key)
       start_key = result.last_evaluated_key
+      index = 0
       result.items.each do |item|
         company = get_company(item['id'])
         instrument = {}
         if company
           # see if the instrument exists
           begin
-            instrument = Stockflare::Instruments.get(ric: item['ric']).call
+            instruments = Stockflare::Instruments.get(ric: item['ric'].downcase).call.body
+            if instruments.count > 0
+              instrument = instruments[0]
+            end
           rescue Shotgun::Services::Errors::HttpError => error
             puts error.inspect
             instrument = {}
@@ -26,12 +30,12 @@ class InstrumentApi
 
           # Build the instrument
           instrument = instrument.merge({
-            ric: item['ric'],
-            repo_no: item['repo_no'],
-            ticker: item['ticker'],
-            currency_code: item['currency_code'],
-            classification: item['classification'],
-            category: item['category'],
+            ric: item['ric'].downcase,
+            repo_no: item['repo_no'].downcase,
+            ticker: item['ticker'].downcase,
+            currency_code: item['currency_code'].downcase,
+            classification: item['classification'].downcase,
+            category: item['category'].downcase,
             exchange_code: item['exchange_id'],
             is_primary: item['is_primary'],
             active: item['active'],
@@ -42,14 +46,16 @@ class InstrumentApi
           instrument = instrument.merge({
             long_name: company['long_name'],
             short_name: company['short_name'],
-            country_code: company['country_code'],
+            country_code: company['country_code'].downcase,
             description: company['description'],
             home_page: company['home_page'],
+            financial_summary: company['financial_summary'],
             financial_information: company['financial_information']
           })
-          binding.pry
           begin
             Stockflare::Instruments.create(instrument).call
+            puts "Populated No: #{index}"
+            index = index + 1
           rescue Shotgun::Services::Errors::HttpError => error
             binding.pry
             puts error.inspect

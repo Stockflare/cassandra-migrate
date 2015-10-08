@@ -3,3 +3,4 @@ migrate:
   command: dotenv rake migrate:instrument
   volumes:
     - .:/stockflare
+    - ./data:/data
