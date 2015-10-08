@@ -24,7 +24,6 @@ module Helpers
       item = {}
       puts "Index: #{index}"
       puts row
-      binding.pry if index == 43
       row.each do |tuple|
 
         value = tuple[1]
@@ -43,7 +42,6 @@ module Helpers
             rescue ArgumentError
                # handle invalid date
             rescue RangeError
-               binding.pry
             end
           end
         end

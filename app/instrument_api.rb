@@ -39,8 +39,7 @@ class InstrumentApi
             exchange_code: item['exchange_id'],
             is_primary: item['is_primary'],
             active: item['active'],
-            sector_code: item['sector_code'],
-            isin: 'null'
+            sector_code: item['sector_code']
           })
 
           instrument = instrument.merge({
@@ -52,13 +51,17 @@ class InstrumentApi
             financial_summary: company['financial_summary'],
             financial_information: company['financial_information']
           })
-          begin
-            Stockflare::Instruments.create(instrument).call
-            puts "Populated No: #{index}"
-            index = index + 1
-          rescue Shotgun::Services::Errors::HttpError => error
-            binding.pry
-            puts error.inspect
+          instrument = instrument.deep_compact
+          instrument[:isin] = 'null'
+          if instrument[:ticker]
+            begin
+              Stockflare::Instruments.create(instrument).call
+              puts "Populated No: #{index}"
+              index = index + 1
+            rescue Shotgun::Services::Errors::HttpError => error
+              puts error.inspect
+              puts error.body
+            end
           end
 
         end
@@ -116,6 +119,20 @@ class InstrumentApi
       return result.items[0]
     else
       return nil
+    end
+  end
+end
+
+class Hash
+  # Recursively filters out nil (or blank - e.g. "" if exclude_blank: true is passed as an option) records from a Hash
+  def deep_compact(options = {})
+    inject({}) do |new_hash, (k,v)|
+      result = (v.kind_of?(String) && (v.empty? || v == 'null')) || v.nil?
+      if !result
+        new_value = v
+        new_hash[k] = new_value
+      end
+      new_hash
     end
   end
 end
