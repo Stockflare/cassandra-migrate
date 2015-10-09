@@ -30,6 +30,7 @@ class InstrumentApi
 
           # Build the instrument
           instrument = instrument.merge({
+            "sic" => item['id'].to_s.downcase,
             "ric" => item['ric'].downcase,
             "repo_no" => item['repo_no'].to_s.downcase,
             "ticker" => item['ticker'].to_s.downcase,
