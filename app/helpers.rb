@@ -36,7 +36,7 @@ module Helpers
           value = false if value == 'False' || value == 'false'
 
           # is a Date
-          if value.kind_of?(String) && tuple[0].end_with?('_at')
+          if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date')
             begin
                value = Date.parse(value).to_time.to_i
             rescue ArgumentError
