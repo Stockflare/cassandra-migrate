@@ -22,6 +22,14 @@ module Helpers
     result = system(command)
     result
   end
+
+  def do_escape_quotes(file_name)
+    File.delete("/data/cassandra-migrate/#{file_name}.quote") if File.exist?("/data/cassandra-migrate/#{file_name}.quote");
+    command = "cat /data/cassandra-migrate/#{file_name} | sed -E '" +  's/\\"/""/g'  + "' > /data/cassandra-migrate/#{file_name}.quote"
+    result = system(command)
+    result
+  end
+
   def do_import_file(file_name, table_name)
     dynamodb = Aws::DynamoDB::Client.new(
       region: ENV['AWS_REGION']
@@ -29,48 +37,62 @@ module Helpers
     table = table_name
     csv_file = file_name
     index = 0
-    CSV.foreach("/data/cassandra-migrate/#{csv_file}", headers: true, converters: :all, encoding: "UTF-8") do |row|
-      item = {}
-      puts "Index: #{index}"
-      puts row
-      row.each do |tuple|
+    header = []
+    File.foreach("/data/cassandra-migrate/#{csv_file}", encoding: "UTF-8") do |csv_line|
+      begin
+        row = CSV.parse(csv_line.gsub('\"', '""'), converters: :all, encoding: "UTF-8" ).first
 
-        value = tuple[1]
+        if header.empty?
+          header = row.map(&:to_s)
+          next
+        end
+        row = Hash[header.zip(row)]
 
-        if tuple[0] != 'id' && tuple[0] != 'stock_id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
-          value = 'null' if value == nil
+        item = {}
+        puts "Index: #{index}"
+        puts row
+        row.each do |tuple|
 
-          # is this a boolean
-          value = true if value == 'True' || value == 'true' || value == 'TRUE'
-          value = false if value == 'False' || value == 'false' || value == 'FALSE'
+          value = tuple[1]
 
-          # is a Date
-          if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date')
-            begin
-               value = Date.parse(value).to_time.to_i
-            rescue ArgumentError
-              if tuple[0] == 'pricing_date'
-                str = tuple[1]
-                value = DateTime.strptime(str, '%m/%d/%y %I:%M %p').to_time.to_i
+          if tuple[0] != 'id' && tuple[0] != 'stock_id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
+            value = 'null' if value == nil
+
+            # is this a boolean
+            value = true if value == 'True' || value == 'true' || value == 'TRUE'
+            value = false if value == 'False' || value == 'false' || value == 'FALSE'
+
+            # is a Date
+            if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date')
+              begin
+                 value = Date.parse(value).to_time.to_i
+              rescue ArgumentError
+                if tuple[0] == 'pricing_date'
+                  str = tuple[1]
+                  value = DateTime.strptime(str, '%m/%d/%y %I:%M %p').to_time.to_i
+                end
+                 # handle invalid date
+              rescue RangeError
               end
-               # handle invalid date
-            rescue RangeError
             end
           end
+          item[tuple[0]] = value
+
         end
-        item[tuple[0]] = value
 
+        puts "Item: #{index}"
+        puts item.inspect
+        # Write the table to Dynamo
+        response = dynamodb.put_item(
+          table_name: table,
+          item: item
+        )
+        index = index + 1
+        puts response
+      rescue CSV::MalformedCSVError => e
+        binding.pry
+        puts e.inspect
       end
-
-      puts "Item: #{index}"
-      puts item.inspect
-      # Write the table to Dynamo
-      response = dynamodb.put_item(
-        table_name: table,
-        item: item
-      )
-      index = index + 1
-      puts response
     end
   end
 

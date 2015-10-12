@@ -30,6 +30,10 @@ namespace :migrate do
     do_copy_file('odin_company.csv')
   end
 
+  task :escape_odin_company_quotes do
+    do_escape_quotes('odin_company.csv')
+  end
+
   task :copy_odin_company_data do
     do_copy_file('odin_company_data.csv')
   end
