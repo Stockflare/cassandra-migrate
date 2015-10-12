@@ -8,12 +8,15 @@ class InstrumentApi
 
     # Loop round and get the stocks
     start_key = nil
+    record = 0
     index = 0
     block = 0
     begin
       result = get_stocks(start_key)
       start_key = result.last_evaluated_key
       result.items.each do |item|
+        puts "Record: #{record}"
+        record = record + 1
         company = get_company(item['id'])
         instrument = {}
         if company
@@ -44,15 +47,16 @@ class InstrumentApi
           })
           instrument = instrument.deep_compact
           instrument['isin'] = 'null'
-          if instrument.has_key?('ticker')
-            begin
-              Stockflare::Instruments.create(instrument).call
-              puts "Block: #{block}, Item No: #{index}, RIC: #{item['ric'].downcase}"
-              index = index + 1
-            rescue Shotgun::Services::Errors::HttpError => error
-              puts error.inspect
-              puts error.body
-            end
+          if !instrument.has_key?('repo_no')
+            instrument['repo_no'] = 'MISSING'
+          end
+          begin
+            Stockflare::Instruments.create(instrument).call
+            puts "Block: #{block}, Item No: #{index}, RIC: #{item['ric'].downcase}"
+            index = index + 1
+          rescue Shotgun::Services::Errors::HttpError => error
+            puts error.inspect
+            puts error.body
           end
 
         end
