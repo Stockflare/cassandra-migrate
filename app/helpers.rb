@@ -41,8 +41,8 @@ module Helpers
           value = 'null' if value == nil
 
           # is this a boolean
-          value = true if value == 'True' || value == 'true'
-          value = false if value == 'False' || value == 'false'
+          value = true if value == 'True' || value == 'true' || value == 'TRUE'
+          value = false if value == 'False' || value == 'false' || value == 'FALSE'
 
           # is a Date
           if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date')
@@ -51,7 +51,7 @@ module Helpers
             rescue ArgumentError
               if tuple[0] == 'pricing_date'
                 str = tuple[1]
-                value = DateTime.strptime(str, '%m/%d/%Y %I:%M %p').to_time.to_i
+                value = DateTime.strptime(str, '%m/%d/%y %I:%M %p').to_time.to_i
               end
                # handle invalid date
             rescue RangeError
