@@ -18,6 +18,14 @@ namespace :migrate do
     do_copy_file('odin_stock_data.csv')
   end
 
+  task :add_header_to_odin_stock_data do
+    add_header_to_file('odin_stock_data.csv', 'app/odin_stock_data.csv.header')
+  end
+
+  task :add_header_to_odin_company_data do
+    add_header_to_file('odin_company_data.csv', 'app/odin_company_data.csv.header')
+  end
+
   task :copy_odin_company do
     do_copy_file('odin_company.csv')
   end
@@ -31,7 +39,7 @@ namespace :migrate do
   end
 
   task :import_odin_stock_data do
-    do_import_file('odin_stock_data.csv', ENV['ODIN_STOCK_DATA_TABLE'])
+    do_import_file('odin_stock_data.csv.with_header', ENV['ODIN_STOCK_DATA_TABLE'])
   end
 
   task :import_odin_company do
@@ -39,11 +47,15 @@ namespace :migrate do
   end
 
   task :import_odin_company_data do
-    do_import_file('odin_company_data.csv', ENV['ODIN_COMPANY_DATA_TABLE'])
+    do_import_file('odin_company_data.csv.with_header', ENV['ODIN_COMPANY_DATA_TABLE'])
   end
 
   task :populate_instrument_api do
     InstrumentApi.populate
+  end
+
+  task :create_company_data_script do
+    create_company_data_script
   end
 
 

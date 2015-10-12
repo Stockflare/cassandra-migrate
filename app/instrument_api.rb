@@ -17,16 +17,6 @@ class InstrumentApi
         company = get_company(item['id'])
         instrument = {}
         if company
-          # see if the instrument exists
-          begin
-            instruments = Stockflare::Instruments.get(ric: item['ric'].downcase).call.body
-            if instruments.count > 0
-              instrument = instruments[0].to_h
-            end
-          rescue Shotgun::Services::Errors::HttpError => error
-            puts error.inspect
-            instrument = {}
-          end
 
           # Build the instrument
           instrument = instrument.merge({
