@@ -2,6 +2,7 @@
 require_relative './app/stockflare'
 require_relative './app/helpers'
 require_relative './app/instrument_api'
+require_relative './app/historical_api'
 require 'dotenv/tasks'
 include Helpers
 
@@ -56,6 +57,10 @@ namespace :migrate do
 
   task :populate_instrument_api do
     InstrumentApi.populate
+  end
+
+  task :populate_historical_api do
+    HistoricalApi.populate
   end
 
   task :create_company_data_script do
