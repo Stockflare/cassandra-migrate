@@ -58,6 +58,7 @@ class InstrumentApi
             puts error.inspect
             puts error.body
           end
+          STDOUT.flush
 
         end
 

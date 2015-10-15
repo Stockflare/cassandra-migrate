@@ -89,6 +89,7 @@ module Helpers
         )
         index = index + 1
         puts response
+        STDOUT.flush
       rescue CSV::MalformedCSVError => e
         binding.pry
         puts e.inspect
