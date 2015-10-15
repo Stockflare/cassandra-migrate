@@ -79,4 +79,18 @@ namespace :migrate do
 
   end
 
+  task :import_time_series_stock_data do
+    puts 'Run import_time_series_stock_data'
+    Rake::Task["migrate:copy_odin_stock_data"].invoke
+    Rake::Task["migrate:add_header_to_odin_stock_data"].invoke
+    Rake::Task["migrate:import_odin_stock_data"].invoke
+  end
+
+  task :import_time_series_company_data do
+    puts 'Run import_time_series_company_data'
+    Rake::Task["migrate:copy_odin_company_data"].invoke
+    Rake::Task["migrate:add_header_to_odin_company_data"].invoke
+    Rake::Task["migrate:import_odin_company_data"].invoke
+  end
+
 end
