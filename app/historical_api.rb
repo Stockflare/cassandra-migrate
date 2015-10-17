@@ -19,14 +19,12 @@ class HistoricalApi
         if company
           company_data = get_company_data(company['id'], item['pricing_date'])
           history_item = {}
-          # binding.pry
           if company_data
-            binding.pry
 
             # Build the history_item
             history_item = history_item.merge({
               "sic" => item['id'].to_s.downcase,
-              "updated_at" => item['pricing_date'],
+              "updated_at" => item['pricing_date'].to_i,
               "high_growth" => item['high_growth'],
               "cheaper" => item['cheaper'],
               "upside" => item['upside'],
@@ -84,16 +82,14 @@ class HistoricalApi
             })
 
             # Hack Hack Hack Hack Hack
-            history_item["net_cash"] = 123.45
-            binding.pry
+            # history_item["net_cash"] = 123.45
             history_item = history_item.deep_compact
-            binding.pry
             begin
               Stockflare::Historical.create(history_item).call
-              puts "Block: #{block}, Item No: #{index}, ID: #{item['id'].downcase}"
+              puts "Block: #{block}, Item No: #{index}, SIC: #{item['id'].downcase}, Pricing Date: #{item['pricing_date'].to_i}"
               index = index + 1
             rescue Shotgun::Services::Errors::HttpError => error
-              binding.pry
+              # binding.pry
               puts error.inspect
               puts error.body
             end

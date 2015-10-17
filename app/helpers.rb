@@ -91,7 +91,6 @@ module Helpers
         puts response
         STDOUT.flush
       rescue CSV::MalformedCSVError => e
-        binding.pry
         puts e.inspect
       end
     end
