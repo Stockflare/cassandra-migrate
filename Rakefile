@@ -59,8 +59,15 @@ namespace :migrate do
     InstrumentApi.populate
   end
 
-  task :populate_historical_api do
-    HistoricalApi.populate
+  task :populate_historical_api, :start_id, :start_pricing_date do |_, args|
+    start_key = nil
+    if args[:start_id] && args[:start_pricing_date]
+      start_key = {
+        id: args[:start_id],
+        pricing_date: args[:start_pricing_date].to_i
+      }
+    end
+    HistoricalApi.populate(start_key)
   end
 
   task :create_company_data_script do

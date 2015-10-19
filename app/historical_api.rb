@@ -4,15 +4,15 @@ require 'pry-byebug'
 require 'shotgun'
 
 class HistoricalApi
-  def self.populate
+  def self.populate(start_key = nil)
 
     # Loop round and get the stocks
-    start_key = nil
     index = 0
     block = 0
     begin
       result = get_stock_data(start_key)
       start_key = result.last_evaluated_key
+      puts "Current Start Key: id: #{result.last_evaluated_key['id']}, pricing_date: #{result.last_evaluated_key['pricing_date'].to_i}" if start_key
       result.items.each do |item|
         company = get_company(item['id'])
 
@@ -94,11 +94,12 @@ class HistoricalApi
               puts error.body
             end
 
+          else
+            puts "Cannot Find... Company Data with Stock ID: #{item['id']}, Company ID: #{company['id']}, Pricing Date: #{item['pricing_date'].to_i}"
           end
+        else
+          puts "Cannot Find... Company with Stock ID: #{item['id']}"
         end
-
-
-
       end
       block = block + 1
     end while start_key
