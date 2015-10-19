@@ -86,7 +86,7 @@ class HistoricalApi
             history_item = history_item.deep_compact
             begin
               Stockflare::Historical.create(history_item).call
-              puts "Block: #{block}, Item No: #{index}, SIC: #{item['id'].downcase}, Pricing Date: #{item['pricing_date'].to_i}"
+              puts "Block: #{block}, Item No: #{index}, SIC: #{item['id'].downcase}, Stock Pricing Date: #{item['pricing_date'].to_i}, Company Pricing Date: #{company_data['pricing_date'].to_i}"
               index = index + 1
             rescue Shotgun::Services::Errors::HttpError => error
               # binding.pry
@@ -137,11 +137,12 @@ class HistoricalApi
     request = {
       table_name: ENV['ODIN_COMPANY_DATA_TABLE'],
       select: 'ALL_ATTRIBUTES',
-      key_condition_expression: 'id = :id AND pricing_date = :pricing_date',
+      key_condition_expression: 'id = :id AND pricing_date <= :pricing_date',
       expression_attribute_values: {
         ":id" => id,
         ":pricing_date" => pricing_date
-      }
+      },
+      scan_index_forward: false
     }
 
     return do_dynamo_query(request)
