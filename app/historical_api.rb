@@ -86,7 +86,7 @@ class HistoricalApi
             history_item = history_item.deep_compact
             begin
               Stockflare::Historical.create(history_item).call
-              puts "Block: #{block}, Item No: #{index}, SIC: #{item['id'].downcase}, Stock Pricing Date: #{item['pricing_date'].to_i}, Company Pricing Date: #{company_data['pricing_date'].to_i}"
+              puts "Block: #{block}, Item No: #{index}, SIC: #{item['id'].downcase}, Stock Pricing Date: #{item['pricing_date'].to_i}, Company Pricing Date: #{company_data['pricing_date'].to_i} #{item['pricing_date'].to_i == company_data['pricing_date'].to_i ? "" : "MISMATCH"}"
               index = index + 1
             rescue Shotgun::Services::Errors::HttpError => error
               # binding.pry
