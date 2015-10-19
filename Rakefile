@@ -59,12 +59,12 @@ namespace :migrate do
     InstrumentApi.populate
   end
 
-  task :populate_historical_api, :start_id, :start_pricing_date do |_, args|
+  task :populate_historical_api do
     start_key = nil
-    if args[:start_id] && args[:start_pricing_date]
+    if ENV['START_ID'] && ENV['START_PRICING_DATE']
       start_key = {
-        id: args[:start_id],
-        pricing_date: args[:start_pricing_date].to_i
+        id: ENV['START_ID'],
+        pricing_date: ENV['START_PRICING_DATE'].to_i
       }
     end
     HistoricalApi.populate(start_key)
