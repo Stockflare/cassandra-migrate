@@ -115,7 +115,13 @@ class HistoricalApi
 
     request[:exclusive_start_key] = start_key if start_key
 
-    return do_dynamo_scan(request)
+    result = do_dynamo_scan(request)
+
+    puts "Scan result"
+    result.to_h.keys.each do |key|
+      puts "#{key} => #{result.send(key)}" if key.to_s != 'items'
+    end
+    return result
   end
 
   def self.get_company(stock_id)
