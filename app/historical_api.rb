@@ -110,7 +110,8 @@ class HistoricalApi
   def self.get_stock_data(start_key)
     request = {
       table_name: ENV['ODIN_STOCK_DATA_TABLE'],
-      select: 'ALL_ATTRIBUTES'
+      select: 'ALL_ATTRIBUTES',
+      limit: 10000000
     }
 
     request[:exclusive_start_key] = start_key if start_key
