@@ -89,7 +89,6 @@ class HistoricalApi
               puts "Block: #{block}, Item No: #{index}, SIC: #{item['id'].downcase}, Stock Pricing Date: #{item['pricing_date'].to_i}, Company Pricing Date: #{company_data['pricing_date'].to_i} #{item['pricing_date'].to_i == company_data['pricing_date'].to_i ? "" : "MISMATCH"}"
               index = index + 1
             rescue Shotgun::Services::Errors::HttpError => error
-              # binding.pry
               puts error.inspect
               puts error.body
             end

@@ -40,7 +40,7 @@ module Helpers
     header = []
     File.foreach("/data/cassandra-migrate/#{csv_file}", encoding: "UTF-8") do |csv_line|
       begin
-        row = CSV.parse(csv_line.gsub('\"', '""'), converters: :all, encoding: "UTF-8" ).first
+        row = CSV.parse(csv_line.gsub('\"', '""'), converters: nil, encoding: "UTF-8" ).first
 
         if header.empty?
           header = row.map(&:to_s)
@@ -63,7 +63,7 @@ module Helpers
             value = false if value == 'False' || value == 'false' || value == 'FALSE'
 
             # is a Date
-            if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date')
+            if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date' || tuple[0] == 'latest_pricing_date')
               begin
                  value = Date.parse(value).to_time.to_i
               rescue ArgumentError
