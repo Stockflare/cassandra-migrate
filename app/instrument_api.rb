@@ -25,7 +25,6 @@ class InstrumentApi
           instrument = instrument.merge({
             "sic" => item['id'].to_s.downcase,
             "ric" => item['ric'].downcase,
-            "repo_no" => item['repo_no'].to_s.downcase,
             "ticker" => item['ticker'].to_s.downcase,
             "currency_code" => item['currency_code'].to_s.downcase,
             "classification" => item['classification'].to_s.downcase,
@@ -45,6 +44,13 @@ class InstrumentApi
             'financial_summary' => company['financial_summary'],
             'financial_information' => company['financial_information']
           })
+
+          if item['repo_no'].kind_of?(Numeric)
+            instrument['repo_no'] = item['repo_no'].to_i.to_s.downcase
+          else
+            instrument['repo_no'] = item['repo_no'].to_s.downcase
+          end
+
           instrument = instrument.deep_compact
           instrument['isin'] = 'null'
           if !instrument.has_key?('repo_no')
