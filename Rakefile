@@ -60,14 +60,7 @@ namespace :migrate do
   end
 
   task :populate_historical_api do
-    start_key = nil
-    if ENV['START_ID'] && ENV['START_PRICING_DATE']
-      start_key = {
-        id: ENV['START_ID'],
-        pricing_date: ENV['START_PRICING_DATE'].to_i
-      }
-    end
-    HistoricalApi.populate(start_key)
+    HistoricalApi.populate
   end
 
   task :create_company_data_script do

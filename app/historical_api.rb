@@ -4,8 +4,8 @@ require 'pry-byebug'
 require 'shotgun'
 
 class HistoricalApi
-  def self.populate(start_key = nil)
-
+  def self.populate()
+    start_key = get_start_key
     # Loop round and get the stocks
     index = 0
     block = 0
@@ -88,6 +88,12 @@ class HistoricalApi
               Stockflare::Historical.create(history_item).call
               puts "Block: #{block}, Item No: #{index}, SIC: #{item['id'].downcase}, Stock Pricing Date: #{item['pricing_date'].to_i}, Company Pricing Date: #{company_data['pricing_date'].to_i} #{item['pricing_date'].to_i == company_data['pricing_date'].to_i ? "" : "MISMATCH"}"
               index = index + 1
+
+              # Update restart tracker table
+              set_start_key({
+                "id" => item['id'].to_s.downcase,
+                "pricing_date" => item['pricing_date'].to_i,
+                })
             rescue Shotgun::Services::Errors::HttpError => error
               puts error.inspect
               puts error.body
@@ -105,6 +111,41 @@ class HistoricalApi
 
   end
 
+  def self.get_start_key
+    request = {
+      table_name: ENV['HISTORY_TRACKER_TABLE'],
+      select: 'ALL_ATTRIBUTES',
+      key_condition_expression: 'id = :id',
+      expression_attribute_values: {
+        ":id" => '1340d1bf-ea62-427b-854f-41b16f1ee4c6'
+      }
+    }
+
+    result = do_dynamo_query(request)
+
+    if result
+      return JSON.parse(result['start_key'])
+    else
+      return nil
+    end
+  end
+
+  def self.set_start_key(start_key)
+    dynamodb = Aws::DynamoDB::Client.new(
+      region: ENV['AWS_REGION']
+    )
+
+    item = {
+      id: '1340d1bf-ea62-427b-854f-41b16f1ee4c6',
+      start_key: JSON.dump(start_key)
+    }
+    response = dynamodb.put_item(
+      table_name: ENV['HISTORY_TRACKER_TABLE'],
+      item: item
+    )
+
+    return response
+  end
 
   def self.get_stock_data(start_key)
     request = {
