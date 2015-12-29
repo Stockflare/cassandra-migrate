@@ -48,16 +48,15 @@ class InstrumentApi
 
           instrument = instrument.deep_compact
           instrument['isin'] = 'null'
-          if !instrument.has_key?('repo_no')
-            instrument['repo_no'] = 'MISSING'
-          end
-          begin
-            Stockflare::Instruments.create(instrument).call
-            puts "Block: #{block}, Item No: #{index}, RIC: #{item['ric'].downcase}"
-            index = index + 1
-          rescue Shotgun::Services::Errors::HttpError => error
-            puts error.inspect
-            puts error.body
+          if instrument.has_key?('repo_no')
+            begin
+              Stockflare::Instruments.create(instrument).call
+              puts "Block: #{block}, Item No: #{index}, RIC: #{item['ric'].downcase}"
+              index = index + 1
+            rescue Shotgun::Services::Errors::HttpError => error
+              puts error.inspect
+              puts error.body
+            end
           end
           STDOUT.flush
 
