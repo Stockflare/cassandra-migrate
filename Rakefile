@@ -2,6 +2,7 @@
 require_relative './app/stockflare'
 require_relative './app/helpers'
 require_relative './app/instrument_api'
+require_relative './app/historical_api'
 require 'dotenv/tasks'
 include Helpers
 
@@ -58,6 +59,10 @@ namespace :migrate do
     InstrumentApi.populate
   end
 
+  task :populate_historical_api do
+    HistoricalApi.populate
+  end
+
   task :create_company_data_script do
     create_company_data_script
   end
@@ -72,6 +77,20 @@ namespace :migrate do
     Rake::Task["migrate:import_odin_company"].invoke
     Rake::Task["migrate:populate_instrument_api"].invoke
 
+  end
+
+  task :import_time_series_stock_data do
+    puts 'Run import_time_series_stock_data'
+    Rake::Task["migrate:copy_odin_stock_data"].invoke
+    Rake::Task["migrate:add_header_to_odin_stock_data"].invoke
+    Rake::Task["migrate:import_odin_stock_data"].invoke
+  end
+
+  task :import_time_series_company_data do
+    puts 'Run import_time_series_company_data'
+    Rake::Task["migrate:copy_odin_company_data"].invoke
+    Rake::Task["migrate:add_header_to_odin_company_data"].invoke
+    Rake::Task["migrate:import_odin_company_data"].invoke
   end
 
 end
