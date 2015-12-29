@@ -55,7 +55,7 @@ module Helpers
 
           value = tuple[1]
 
-          if tuple[0] != 'id' && tuple[0] != 'stock_id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
+          if tuple[0] != 'id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
             value = 'null' if value == nil
 
             # is this a boolean
