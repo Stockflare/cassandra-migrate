@@ -30,7 +30,7 @@ module Helpers
     result
   end
 
-  def do_import_file(file_name, table_name)
+  def do_import_file(file_name, table_name, start_date)
     dynamodb = Aws::DynamoDB::Client.new(
       region: ENV['AWS_REGION']
     )
@@ -80,15 +80,17 @@ module Helpers
 
         end
 
-        puts "Item: #{index}"
-        puts item.inspect
-        # Write the table to Dynamo
-        response = dynamodb.put_item(
-          table_name: table,
-          item: item
-        )
-        index = index + 1
-        puts response
+        if (!item.has_key?('pricing_date')) || (item.has_key?('pricing_date') && item['pricing_date'] >= start_date)
+          puts "Item: #{index}"
+          puts item.inspect
+          # Write the table to Dynamo
+          response = dynamodb.put_item(
+            table_name: table,
+            item: item
+          )
+          index = index + 1
+          puts response
+        end
         STDOUT.flush
       rescue CSV::MalformedCSVError => e
         puts e.inspect

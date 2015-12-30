@@ -44,7 +44,7 @@ namespace :migrate do
   end
 
   task :import_odin_stock_data do
-    do_import_file('odin_stock_data.csv.with_header', ENV['ODIN_STOCK_DATA_TABLE'])
+    do_import_file('odin_stock_data.csv.with_header', ENV['ODIN_STOCK_DATA_TABLE'], ENV['START_DATE'].to_i)
   end
 
   task :import_odin_company do
@@ -52,7 +52,7 @@ namespace :migrate do
   end
 
   task :import_odin_company_data do
-    do_import_file('odin_company_data.csv.with_header', ENV['ODIN_COMPANY_DATA_TABLE'])
+    do_import_file('odin_company_data.csv.with_header', ENV['ODIN_COMPANY_DATA_TABLE'], ENV['START_DATE'].to_i)
   end
 
   task :populate_instrument_api do
@@ -60,7 +60,7 @@ namespace :migrate do
   end
 
   task :populate_historical_api do
-    HistoricalApi.populate
+    HistoricalApi.populate(ENV['START_DATE'].to_i)
   end
 
   task :create_company_data_script do
