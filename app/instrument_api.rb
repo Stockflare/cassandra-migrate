@@ -46,6 +46,17 @@ class InstrumentApi
             'financial_information' => company['financial_information']
           })
 
+          # Convert exchange_id to exchange code
+          if is_number?(item['exchange_id'])
+            exchange = call_api Stockflare::Exchanges.get(ids: [item['exchange_id']])
+            if exchange
+              instrument['exchange_code'] = exchange.code.downcase
+            end
+          else
+            instrument['exchange_code'] = item['exchange_id']
+          end
+
+
           instrument = instrument.deep_compact
           instrument['isin'] = 'null'
           if instrument.has_key?('repo_no')
@@ -118,6 +129,28 @@ class InstrumentApi
       return nil
     end
   end
+
+  def self.call_api(api, collection = false)
+    target = nil
+    begin
+      result = api.call
+      # binding.pry
+      if collection
+        target = result.body
+      else
+        target = result.body.count > 0 ? result.body[0] : nil
+      end
+    rescue Shotgun::Services::Errors::HttpError => error
+      puts error.inspect
+      puts error.body
+    end
+    target
+  end
+
+  def self.is_number? string
+    true if Float(string) rescue false
+  end
+
 end
 
 class Hash
