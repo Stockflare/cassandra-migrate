@@ -40,7 +40,7 @@ namespace :migrate do
   end
 
   task :import_odin_stock do
-    do_import_file('odin_stock.csv', ENV['ODIN_STOCK_TABLE'])
+    do_import_file('odin_stock.csv', ENV['ODIN_STOCK_TABLE'], ENV['START_DATE'].to_i)
   end
 
   task :import_odin_stock_data do
@@ -48,7 +48,7 @@ namespace :migrate do
   end
 
   task :import_odin_company do
-    do_import_file('odin_company.csv', ENV['ODIN_COMPANY_TABLE'])
+    do_import_file('odin_company.csv', ENV['ODIN_COMPANY_TABLE'], ENV['START_DATE'].to_i)
   end
 
   task :import_odin_company_data do
