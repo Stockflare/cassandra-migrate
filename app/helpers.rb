@@ -30,7 +30,14 @@ module Helpers
     result
   end
 
-  def do_import_file(file_name, table_name, start_date)
+  def do_import_file(file_name, table_name, start_date, tracker_id = nil)
+    start_record = 0
+    current_record = 0
+
+    if tracker_id
+      start_record = get_tracker(tracker_id)
+    end
+
     dynamodb = Aws::DynamoDB::Client.new(
       region: ENV['AWS_REGION']
     )
@@ -46,55 +53,111 @@ module Helpers
           header = row.map(&:to_s)
           next
         end
-        row = Hash[header.zip(row)]
+        if current_record >= start_record
+          row = Hash[header.zip(row)]
 
-        item = {}
-        puts "Index: #{index}"
-        puts row
-        row.each do |tuple|
+          item = {}
+          puts "Index: #{index}"
+          puts row
+          row.each do |tuple|
 
-          value = tuple[1]
+            value = tuple[1]
 
-          if tuple[0] != 'id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
-            value = 'null' if value == nil
+            if tuple[0] != 'id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
+              value = 'null' if value == nil
 
-            # is this a boolean
-            value = true if value == 'True' || value == 'true' || value == 'TRUE'
-            value = false if value == 'False' || value == 'false' || value == 'FALSE'
+              # is this a boolean
+              value = true if value == 'True' || value == 'true' || value == 'TRUE'
+              value = false if value == 'False' || value == 'false' || value == 'FALSE'
 
-            # is a Date
-            if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date' || tuple[0] == 'latest_pricing_date')
-              begin
-                 value = Date.parse(value).to_time.to_i
-              rescue ArgumentError
-                if tuple[0] == 'pricing_date'
-                  str = tuple[1]
-                  value = DateTime.strptime(str, '%m/%d/%y %I:%M %p').to_time.to_i
+              # is a Date
+              if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date' || tuple[0] == 'latest_pricing_date')
+                begin
+                   value = Date.parse(value).to_time.to_i
+                rescue ArgumentError
+                  if tuple[0] == 'pricing_date'
+                    str = tuple[1]
+                    value = DateTime.strptime(str, '%m/%d/%y %I:%M %p').to_time.to_i
+                  end
+                   # handle invalid date
+                rescue RangeError
                 end
-                 # handle invalid date
-              rescue RangeError
               end
             end
+            item[tuple[0]] = value
+
           end
-          item[tuple[0]] = value
 
-        end
-
-        if (!item.has_key?('pricing_date')) || (item.has_key?('pricing_date') && item['pricing_date'] >= start_date)
-          puts "Item: #{index}"
-          puts item.inspect
-          # Write the table to Dynamo
-          response = dynamodb.put_item(
-            table_name: table,
-            item: item
-          )
-          index = index + 1
-          puts response
+          if (!item.has_key?('pricing_date')) || (item.has_key?('pricing_date') && item['pricing_date'] >= start_date)
+            puts "Item: #{index}"
+            puts item.inspect
+            # Write the table to Dynamo
+            response = dynamodb.put_item(
+              table_name: table,
+              item: item
+            )
+            index = index + 1
+            puts response
+          end
         end
         STDOUT.flush
       rescue CSV::MalformedCSVError => e
         puts e.inspect
       end
+
+      current_record = current_record + 1
+      if tracker_id && current_record >= start_record
+        set_tracker(tracker_id, current_record)
+      end
+    end
+  end
+
+  def get_tracker(tracker_id)
+    request = {
+      table_name: ENV['HISTORY_TRACKER_TABLE'],
+      select: 'ALL_ATTRIBUTES',
+      key_condition_expression: 'id = :id',
+      expression_attribute_values: {
+        ":id" => tracker_id
+      }
+    }
+
+    result = do_dynamo_query(request)
+
+    if result
+      return result['start_record'].to_i
+    else
+      return 0
+    end
+  end
+
+  def set_tracker(tracker_id, start_record)
+    dynamodb = Aws::DynamoDB::Client.new(
+      region: ENV['AWS_REGION']
+    )
+
+    item = {
+      id: tracker_id,
+      start_record: start_record
+    }
+    response = dynamodb.put_item(
+      table_name: ENV['HISTORY_TRACKER_TABLE'],
+      item: item
+    )
+
+    return response
+  end
+
+  def do_dynamo_query(request)
+    dynamodb = Aws::DynamoDB::Client.new(
+      region: ENV['AWS_REGION']
+    )
+
+    result = dynamodb.query(request)
+    if result.count > 0
+      return result.items[0]
+    else
+      return nil
     end
   end
 
