@@ -58,7 +58,7 @@ module Helpers
 
           item = {}
           puts "Index: #{index}"
-          puts row
+          # puts row
           row.each do |tuple|
 
             value = tuple[1]
@@ -73,14 +73,17 @@ module Helpers
               # is a Date
               if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date' || tuple[0] == 'latest_pricing_date')
                 begin
-                   value = Date.parse(value).to_time.to_i
-                rescue ArgumentError
                   if tuple[0] == 'pricing_date'
                     str = tuple[1]
+                    # puts "#{DateTime.strptime(str, '%m/%d/%y %I:%M %p')} : #{str}"
                     value = DateTime.strptime(str, '%m/%d/%y %I:%M %p').to_time.to_i
+                  else
+                    value = Date.parse(value).to_time.to_i
                   end
-                   # handle invalid date
+                rescue ArgumentError
+                  puts "Date Error #{tuple[1]}"
                 rescue RangeError
+                  puts "Date Error #{tuple[1]}"
                 end
               end
             end
@@ -109,6 +112,72 @@ module Helpers
       if tracker_id && current_record >= start_record
         set_tracker(tracker_id, current_record)
       end
+    end
+  end
+
+  def list_file_data(file_name, start_date, sic)
+    start_record = 0
+    current_record = 0
+
+    csv_file = file_name
+    header = []
+    File.foreach("/data/cassandra-migrate/#{csv_file}", encoding: "UTF-8") do |csv_line|
+      begin
+        row = CSV.parse(csv_line.gsub('\"', '""'), converters: nil, encoding: "UTF-8" ).first
+
+        if header.empty?
+          header = row.map(&:to_s)
+          next
+        end
+        if current_record >= start_record
+          row = Hash[header.zip(row)]
+
+          item = {}
+          if row['id'] != sic
+            row.each do |tuple|
+              value = tuple[1]
+
+              if tuple[0] != 'id' && tuple[0] != 'exchange_id' && tuple[0] != 'sector_code'
+                value = 'null' if value == nil
+
+                # is this a boolean
+                value = true if value == 'True' || value == 'true' ||
+                 value == 'TRUE'
+                value = false if value == 'False' || value == 'false' || value == 'FALSE'
+
+                # is a Date
+                if value.kind_of?(String) && (tuple[0].end_with?('_at') || tuple[0] == 'pricing_date' || tuple[0] == 'latest_pricing_date')
+                  begin
+                    if tuple[0] == 'pricing_date'
+                      str = tuple[1]
+                      puts "#{DateTime.strptime(str, '%m/%d/%y %I:%M %p')} : #{str}"
+                      value = DateTime.strptime(str, '%m/%d/%y %I:%M %p').to_time.to_i
+                    else
+                      value = Date.parse(value).to_time.to_i
+                    end
+                  rescue ArgumentError
+                    puts "Date Error #{tuple[1]}"
+                  rescue RangeError
+                    puts "Date Error #{tuple[1]}"
+                  end
+                end
+              end
+              item[tuple[0]] = value
+
+            end
+          end
+
+          # if (!item.has_key?('pricing_date')) || (item.has_key?('pricing_date') && item['pricing_date'] >= start_date)
+          #   puts "Item: #{index}"
+          # end
+        end
+        STDOUT.flush
+      rescue CSV::MalformedCSVError => e
+        puts e.inspect
+      end
+
+      current_record = current_record + 1
+      return if current_record > 10
     end
   end
 

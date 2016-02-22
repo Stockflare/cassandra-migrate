@@ -113,6 +113,35 @@ class HistoricalApi
 
   end
 
+  def self.check_dates(start_date)
+    start_date = 0
+    start_key = nil
+    block = 0
+    begin
+      result = query_stock_data(start_key)
+      start_key = result.last_evaluated_key
+      result.items.each do |item|
+        if item['pricing_date'].to_i >= start_date
+          company = get_company(item['id'])
+
+          if company
+            company_data = get_company_data(company['id'], item['pricing_date'])
+            if company_data
+              puts "Got Data for #{Time.at(item['pricing_date'].to_i)} : #{item['pricing_date'].to_i} : #{item['id']}"
+
+            else
+              puts "Cannot Find... Company Data with Stock ID: #{item['id']}, Company ID: #{company['id']}, Pricing Date: #{Time.at(item['pricing_date'].to_i)} : #{item['pricing_date'].to_i}"
+            end
+          else
+            puts "Cannot Find... Company with Stock ID: #{item['id']}"
+          end
+        end
+      end
+      block = block + 1
+      puts "Block: #{block}"
+    end while start_key
+  end
+
   def self.get_start_key
     request = {
       table_name: ENV['HISTORY_TRACKER_TABLE'],
@@ -164,6 +193,28 @@ class HistoricalApi
     result.to_h.keys.each do |key|
       puts "#{key} => #{result.send(key)}" if key.to_s != 'items'
     end
+    return result
+  end
+
+  def self.query_stock_data(start_key)
+    request = {
+      table_name: ENV['ODIN_STOCK_DATA_TABLE'],
+      select: 'ALL_ATTRIBUTES',
+      limit: 10000000,
+      key_condition_expression: 'id = :stock_id',
+      expression_attribute_values: {
+        ":stock_id" => '6c8227be-6855-11e4-98bf-294717b2347c'
+      }
+    }
+
+    request[:exclusive_start_key] = start_key if start_key
+
+    dynamodb = Aws::DynamoDB::Client.new(
+      region: ENV['AWS_REGION']
+    )
+
+    result = dynamodb.query(request)
+
     return result
   end
 

@@ -15,6 +15,10 @@ namespace :migrate do
     do_copy_file('odin_stock.csv')
   end
 
+  task :check_dates do
+    HistoricalApi.check_dates(Time.parse('01 Nov 2015').utc.to_i)
+  end
+
   task :copy_odin_stock_data do
     do_copy_file('odin_stock_data.csv')
   end
@@ -45,6 +49,10 @@ namespace :migrate do
 
   task :import_odin_stock_data do
     do_import_file('odin_stock_data.csv.with_header', ENV['ODIN_STOCK_DATA_TABLE'], ENV['START_DATE'].to_i, '79e36a4a-6090-462f-b9d0-8b6e754d5a30')
+  end
+
+  task :list_odin_stock_data do
+    list_file_data('odin_stock_data.csv.with_header', 0, '6c8227be-6855-11e4-98bf-294717b2347c')
   end
 
   task :import_odin_company do
